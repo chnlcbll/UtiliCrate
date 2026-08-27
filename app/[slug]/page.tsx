@@ -17,7 +17,7 @@ const components: Record<string, React.ComponentType> = {
 export function generateStaticParams() { return tools.map((tool) => ({ slug: tool.slug })); }
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const tool = toolBySlug((await params).slug); if (!tool) return {};
-  return { title: `${tool.name} — Toolio`, description: tool.description, openGraph: { title: `${tool.name} — Toolio`, description: tool.description }, twitter: { card: 'summary_large_image', title: `${tool.name} — Toolio`, description: tool.description } };
+  return { title: `${tool.name} — UtiliCrate`, description: tool.description, openGraph: { title: `${tool.name} — UtiliCrate`, description: tool.description, images: [] }, twitter: { card: 'summary', title: `${tool.name} — UtiliCrate`, description: tool.description, images: [] } };
 }
 
 export default async function ToolPage({ params }: { params: Promise<{ slug: string }> }) {

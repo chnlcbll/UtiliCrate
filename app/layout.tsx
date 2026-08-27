@@ -13,18 +13,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
-  title: 'Toolio — Useful tools. One place.',
+  metadataBase: new URL('https://utilicrate.syaneeel.chatgpt.site'),
+  title: 'UtiliCrate — Useful tools. One place.',
   description: 'Fast, private everyday calculators and utilities without the clutter.',
-  icons: { icon: '/favicon.svg' },
+  icons: { icon: '/utilicrate-logo.png', apple: '/utilicrate-logo.png' },
   openGraph: {
-    title: 'Toolio — Useful tools. One place.',
+    title: 'UtiliCrate — Useful tools. One place.',
     description: 'Fast, private everyday calculators and utilities without the clutter.',
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Toolio — Useful tools. One place.' }],
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'UtiliCrate — Useful tools. One place.' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Toolio — Useful tools. One place.',
+    title: 'UtiliCrate — Useful tools. One place.',
     description: 'Fast, private everyday calculators and utilities without the clutter.',
     images: ['/og.png'],
   },

@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 import type { ToolMeta } from '@/data/tools';
 import { rememberRecent } from '@/lib/storage';
+import { Brand } from '@/components/brand';
 
 export function ToolShell({ tool, children }: { tool: ToolMeta; children: React.ReactNode }) {
   useEffect(() => rememberRecent(tool.slug), [tool.slug]);
   return (
     <main>
       <header className="site-header">
-        <Link href="/" className="brand"><span className="brand-mark">T</span><span>Toolio</span></Link>
+        <Brand />
         <Link href="/about" className="header-link">About & privacy</Link>
       </header>
       <div className="tool-page wrap">

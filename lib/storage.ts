@@ -34,7 +34,7 @@ export function writeLocal<T>(key: string, value: T) {
   } catch { /* Storage can be unavailable in private browsing. */ }
 }
 
-export function clearToolioData() {
+export function clearUtiliCrateData() {
   if (typeof window === 'undefined') return;
   Object.keys(window.localStorage).filter((key) => key.startsWith(PREFIX)).forEach((key) => window.localStorage.removeItem(key));
 }
