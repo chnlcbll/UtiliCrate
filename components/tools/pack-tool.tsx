@@ -1,0 +1,37 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { readLocal, storageKeys, writeLocal } from '@/lib/storage';
+import { ActionRow, Field, Result } from '@/components/tool-shell';
+
+type PackItem = { id: string; name: string; quantity: number; category: string; checked: boolean };
+const id = () => Math.random().toString(36).slice(2, 9);
+const base = ['Phone', 'Wallet', 'ID / passport', 'Toothbrush', 'Toothpaste', 'Medication', 'Phone charger'];
+function generatePack(days: number, type: string, climate: string, activities: string[]): PackItem[] {
+  const entries: [string, string, number][] = base.map((name) => [name, ['Toothbrush', 'Toothpaste', 'Medication'].includes(name) ? 'Toiletries' : 'Essentials', 1]);
+  entries.push(['Shirts', 'Clothing', Math.max(1, days)], ['Bottoms', 'Clothing', Math.ceil(days / 2)], ['Underwear', 'Clothing', days + 1], ['Socks', 'Clothing', days]);
+  if (climate === 'Hot') entries.push(['Sunscreen', 'Toiletries', 1], ['Light clothing', 'Clothing', Math.ceil(days / 2)]);
+  if (climate === 'Cold') entries.push(['Warm jacket', 'Clothing', 1], ['Thermal layers', 'Clothing', Math.ceil(days / 2)]);
+  if (climate === 'Rainy' || climate === 'Mixed') entries.push(['Umbrella', 'Essentials', 1], ['Rain jacket', 'Clothing', 1]);
+  if (type === 'Beach' || activities.includes('Swimming')) entries.push(['Swimsuit', 'Activities', 2], ['Beach towel', 'Activities', 1], ['Flip-flops', 'Clothing', 1]);
+  if (type === 'Business' || activities.includes('Formal event')) entries.push(['Formal outfit', 'Clothing', 1], ['Dress shoes', 'Clothing', 1]);
+  if (type === 'International') entries.push(['Travel adapter', 'Electronics', 1], ['Travel insurance', 'Documents', 1]);
+  if (activities.includes('Hiking')) entries.push(['Hiking shoes', 'Activities', 1], ['Water bottle', 'Activities', 1]);
+  if (activities.includes('Gym')) entries.push(['Workout clothes', 'Activities', Math.min(days, 3)]);
+  if (activities.includes('Electronics')) entries.push(['Power bank', 'Electronics', 1], ['Headphones', 'Electronics', 1]);
+  return entries.map(([name, category, quantity]) => ({ id: id(), name, category, quantity, checked: false }));
+}
+
+export function PackTool() {
+  const initial = { type: 'Vacation', days: 5, climate: 'Hot', activities: ['Electronics'], items: [] as PackItem[] };
+  const [state, setState] = useState(initial); const [custom, setCustom] = useState(''); const [ready, setReady] = useState(false);
+  // Client-only hydration is required because browser storage is unavailable during SSR.
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  useEffect(() => { setState(readLocal(storageKeys.pack, initial)); setReady(true); }, []); useEffect(() => { if (ready) writeLocal(storageKeys.pack, state); }, [state, ready]);
+  const grouped = useMemo(() => Object.entries(state.items.reduce<Record<string, PackItem[]>>((groups, item) => ({ ...groups, [item.category]: [...(groups[item.category] ?? []), item] }), {})), [state.items]);
+  const checked = state.items.filter((item) => item.checked).length;
+  const generate = () => setState({ ...state, items: generatePack(state.days, state.type, state.climate, state.activities) });
+  const toggleActivity = (activity: string) => setState({ ...state, activities: state.activities.includes(activity) ? state.activities.filter((item) => item !== activity) : [...state.activities, activity] });
+  const summary = grouped.map(([category, items]) => `${category}\n${items.map((item) => `${item.checked ? '✓' : '□'} ${item.name}${item.quantity > 1 ? ` × ${item.quantity}` : ''}`).join('\n')}`).join('\n\n');
+  return <div className="tool-layout pack-layout"><section className="control-card"><div className="field-grid"><Field label="Trip type"><select value={state.type} onChange={(e) => setState({ ...state, type: e.target.value })}>{['Vacation', 'Beach', 'Business', 'Camping', 'Staycation', 'International', 'Custom'].map((item) => <option key={item}>{item}</option>)}</select></Field><Field label="Duration (days)"><input type="number" min="1" max="365" value={state.days} onChange={(e) => setState({ ...state, days: Math.max(1, Number(e.target.value)) })} /></Field><Field label="Conditions"><select value={state.climate} onChange={(e) => setState({ ...state, climate: e.target.value })}>{['Hot', 'Cold', 'Rainy', 'Mixed'].map((item) => <option key={item}>{item}</option>)}</select></Field></div><div className="field"><span>Optional needs</span><div className="toggle-cloud">{['Swimming', 'Formal event', 'Hiking', 'Gym', 'Work/study', 'Electronics', 'Medication', 'Toiletries'].map((activity) => <button key={activity} className={state.activities.includes(activity) ? 'mini-button selected' : 'mini-button'} onClick={() => toggleActivity(activity)}>{activity}</button>)}</div></div><ActionRow><button className="button" onClick={generate}>Generate checklist</button></ActionRow></section>{state.items.length ? <section className="result-card checklist"><span>{checked} of {state.items.length} packed</span><strong>Your {state.days}-day {state.type.toLowerCase()} list</strong><div className="progress"><i style={{ width: `${state.items.length ? checked / state.items.length * 100 : 0}%` }} /></div>{grouped.map(([category, items]) => <div className="check-group" key={category}><h3>{category}</h3>{items.map((item) => <div className="check-item" key={item.id}><label><input type="checkbox" checked={item.checked} onChange={() => setState({ ...state, items: state.items.map((entry) => entry.id === item.id ? { ...entry, checked: !entry.checked } : entry) })} /><span>{item.name}</span></label><input aria-label={`${item.name} quantity`} type="number" min="1" value={item.quantity} onChange={(e) => setState({ ...state, items: state.items.map((entry) => entry.id === item.id ? { ...entry, quantity: Number(e.target.value) } : entry) })} /><button className="icon-button" onClick={() => setState({ ...state, items: state.items.filter((entry) => entry.id !== item.id) })}>×</button></div>)}</div>)}<div className="add-custom"><input value={custom} placeholder="Add a custom item" onChange={(e) => setCustom(e.target.value)} /><button className="button secondary" onClick={() => { if (custom.trim()) setState({ ...state, items: [...state.items, { id: id(), name: custom.trim(), quantity: 1, category: 'Custom', checked: false }] }); setCustom(''); }}>Add</button></div><ActionRow><button className="button secondary" onClick={() => setState(initial)}>Start new list</button><button className="button secondary" onClick={() => { setState(initial); writeLocal(storageKeys.pack, initial); }}>Clear saved list</button><button className="button" onClick={() => navigator.clipboard?.writeText(summary)}>Copy</button></ActionRow></section> : <Result title="Set up your trip"><p>Toolio uses simple rules—never AI—to create your checklist.</p></Result>}</div>;
+}
