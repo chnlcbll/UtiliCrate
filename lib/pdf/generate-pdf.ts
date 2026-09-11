@@ -49,7 +49,7 @@ function drawFooter(state: State, page: PDFPage, index: number, count: number) {
 function newPage(state: State) {
   state.page = state.doc.addPage([PAGE.width, PAGE.height]);
   state.page.drawRectangle({ x: 0, y: 0, width: PAGE.width, height: PAGE.height, color: paper });
-  state.page.drawText('UTILICRATE', { x: PAGE.margin, y: 805, size: 9, font: state.font, color: state.accent, characterSpacing: 1.4 });
+  state.page.drawText('UTILICRATE', { x: PAGE.margin, y: 805, size: 9, font: state.font, color: state.accent });
   const tool = clean(state.report.tool).toUpperCase();
   state.page.drawText(tool, { x: PAGE.width - PAGE.margin - state.font.widthOfTextAtSize(tool, 8), y: 805, size: 8, font: state.font, color: muted });
   state.page.drawLine({ start: { x: PAGE.margin, y: 794 }, end: { x: PAGE.width - PAGE.margin, y: 794 }, thickness: .7, color: line });
@@ -73,13 +73,13 @@ function paragraph(state: State, text: string, options?: { size?: number; color?
 function sectionTitle(state: State, title: string) {
   ensure(state, 42);
   state.y -= 10;
-  state.page.drawText(clean(title).toUpperCase(), { x: PAGE.margin, y: state.y, size: 8, font: state.font, color: state.accent, characterSpacing: 1 });
+  state.page.drawText(clean(title).toUpperCase(), { x: PAGE.margin, y: state.y, size: 8, font: state.font, color: state.accent });
   state.y -= 12;
   state.page.drawLine({ start: { x: PAGE.margin, y: state.y }, end: { x: PAGE.width - PAGE.margin, y: state.y }, thickness: .7, color: line });
   state.y -= 17;
 }
 
-function fit(text: string, font: PDFFont, size: number, maxWidth: number) {
+function fit(text: unknown, font: PDFFont, size: number, maxWidth: number) {
   let value = clean(text);
   if (font.widthOfTextAtSize(value, size) <= maxWidth) return value;
   while (value.length > 1 && font.widthOfTextAtSize(`${value}...`, size) > maxWidth) value = value.slice(0, -1);
@@ -90,7 +90,7 @@ function drawTableHeader(state: State, columns: PdfTableColumn[], widths: number
   state.page.drawRectangle({ x: PAGE.margin, y: state.y - 19, width: PAGE.width - PAGE.margin * 2, height: 24, color: rgb(.93, .94, .92) });
   let x = PAGE.margin + 7;
   columns.forEach((column, index) => {
-    state.page.drawText(clean(column.label).toUpperCase(), { x, y: state.y - 10, size: 6.8, font: state.font, color: muted, characterSpacing: .45 });
+    state.page.drawText(clean(column.label).toUpperCase(), { x, y: state.y - 10, size: 6.8, font: state.font, color: muted });
     x += widths[index];
   });
   state.y -= 25;
@@ -106,7 +106,7 @@ async function drawSection(state: State, section: PdfSection) {
       section.items.slice(index, index + columns).forEach((item, offset) => {
         const x = PAGE.margin + offset * (width + 10);
         state.page.drawRectangle({ x, y: state.y - 61, width, height: 66, borderColor: line, borderWidth: .7, color: rgb(.972, .97, .95) });
-        state.page.drawText(clean(item.label).toUpperCase(), { x: x + 12, y: state.y - 14, size: 6.8, font: state.font, color: muted, characterSpacing: .5 });
+        state.page.drawText(clean(item.label).toUpperCase(), { x: x + 12, y: state.y - 14, size: 6.8, font: state.font, color: muted });
         state.page.drawText(fit(item.value, state.font, 17, width - 24), { x: x + 12, y: state.y - 37, size: 17, font: state.font, color: ink });
         if (item.detail) state.page.drawText(fit(item.detail, state.font, 7.5, width - 24), { x: x + 12, y: state.y - 52, size: 7.5, font: state.font, color: muted });
       });
@@ -208,7 +208,7 @@ async function drawSection(state: State, section: PdfSection) {
       const col = index % 2, row = Math.floor(index / 2), x = PAGE.margin + col * (width + gap), top = state.y - row * (height + gap);
       state.page.drawRectangle({ x, y: top - height, width, height, borderColor: line, borderWidth: .7, color: rgb(.97, .97, .95) });
       state.page.drawRectangle({ x, y: top - 27, width, height: 27, color: index === 0 ? state.accent : rgb(.9, .91, .89) });
-      state.page.drawText(clean(quadrant.title).toUpperCase(), { x: x + 10, y: top - 17, size: 8, font: state.font, color: index === 0 ? paper : ink, characterSpacing: .6 });
+      state.page.drawText(clean(quadrant.title).toUpperCase(), { x: x + 10, y: top - 17, size: 8, font: state.font, color: index === 0 ? paper : ink });
       if (quadrant.subtitle) state.page.drawText(fit(quadrant.subtitle, state.font, 6.5, width - 20), { x: x + 10, y: top - 39, size: 6.5, font: state.font, color: muted });
       quadrant.items.slice(0, 5).forEach((item, itemIndex) => state.page.drawText(fit(`- ${item}`, state.font, 7.5, width - 20), { x: x + 10, y: top - 56 - itemIndex * 16, size: 7.5, font: state.font, color: ink }));
       if (quadrant.items.length > 5) overflow.push({ title: quadrant.title, items: quadrant.items.slice(5) });
@@ -232,7 +232,7 @@ async function drawSection(state: State, section: PdfSection) {
     section.days.forEach((day, index) => {
       const x = PAGE.margin + width * index;
       state.page.drawRectangle({ x, y: state.y - 69, width, height: 74, borderColor: line, borderWidth: .5, color: index > 4 ? rgb(.95, .94, .91) : paper });
-      state.page.drawText(day.weekday.toUpperCase(), { x: x + 7, y: state.y - 13, size: 6.3, font: state.font, color: muted, characterSpacing: .4 });
+      state.page.drawText(day.weekday.toUpperCase(), { x: x + 7, y: state.y - 13, size: 6.3, font: state.font, color: muted });
       state.page.drawText(day.day, { x: x + 7, y: state.y - 42, size: 20, font: state.serif, color: ink });
       if (day.detail) state.page.drawText(fit(day.detail, state.font, 5.5, width - 12), { x: x + 7, y: state.y - 59, size: 5.5, font: state.font, color: muted });
     });
@@ -282,7 +282,7 @@ export async function generatePdf(report: PdfReport) {
     ensure(state, 130);
     state.page.drawRectangle({ x: PAGE.margin, y: state.y - 103, width: PAGE.width - PAGE.margin * 2, height: 112, color: rgb(.945, .947, .925), borderColor: line, borderWidth: .6 });
     state.page.drawRectangle({ x: PAGE.margin, y: state.y - 103, width: 5, height: 112, color: state.accent });
-    state.page.drawText(clean(report.hero.label).toUpperCase(), { x: PAGE.margin + 20, y: state.y - 19, size: 7.5, font, color: muted, characterSpacing: .8 });
+    state.page.drawText(clean(report.hero.label).toUpperCase(), { x: PAGE.margin + 20, y: state.y - 19, size: 7.5, font, color: muted });
     const heroValue = fit(report.hero.value, font, 38, PAGE.width - PAGE.margin * 2 - 40);
     state.page.drawText(heroValue, { x: PAGE.margin + 20, y: state.y - 62, size: 38, font, color: ink });
     if (report.hero.detail) state.page.drawText(fit(report.hero.detail, font, 9, PAGE.width - PAGE.margin * 2 - 40), { x: PAGE.margin + 20, y: state.y - 84, size: 9, font, color: muted });
@@ -295,7 +295,9 @@ export async function generatePdf(report: PdfReport) {
   const pages = doc.getPages();
   pages.forEach((page, index) => drawFooter(state, page, index, pages.length));
   const bytes = await doc.save({ useObjectStreams: true, addDefaultPage: false });
-  return { blob: new Blob([bytes], { type: 'application/pdf' }), filename: pdfFilename(report.tool, report.filenameDetail || report.title, report.generatedAt) };
+  const blobBytes = new Uint8Array(bytes.byteLength);
+  blobBytes.set(bytes);
+  return { blob: new Blob([blobBytes.buffer], { type: 'application/pdf' }), filename: pdfFilename(report.tool, report.filenameDetail || report.title, report.generatedAt) };
 }
 
 export async function downloadPdfReport(report: PdfReport) {
