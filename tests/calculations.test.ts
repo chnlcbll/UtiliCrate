@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { calculatePercentage, calculateReceiptShares, calendarDiff, dealMetrics, roundMoney, splitBill, unitRate, weightedScores } from '../lib/calculations.ts';
+import { calculateBmi, calculateCountdown, calculateFuelCost, calculatePercentage, calculateProsCons, calculateReceiptShares, calculateSavingsGoal, calculateTripCost, calendarDiff, dealMetrics, isoWeekDates, isoWeekInfo, roundMoney, splitBill, unitRate, weightedScores } from '../lib/calculations.ts';
 
 test('rounds financial values to cents', () => {
   assert.equal(roundMoney(249.9999997), 250);
@@ -40,4 +40,50 @@ test('normalizes weighted decision criteria', () => {
 test('splits shared receipt items and proportional fees', () => {
   const shares = calculateReceiptShares([{ id: 'a' }, { id: 'b' }], [{ price: 300, quantity: 1, assigned: ['a'] }, { price: 200, quantity: 1, assigned: ['a', 'b'] }], 50, 0);
   assert.deepEqual(shares, [{ id: 'a', itemTotal: 400, fee: 40, discount: 0, total: 440 }, { id: 'b', itemTotal: 100, fee: 10, discount: 0, total: 110 }]);
+});
+
+test('calculates savings contribution needs and shortfall', () => {
+  const result = calculateSavingsGoal({ target: 70000, saved: 24500, targetDate: new Date('2026-12-20T00:00:00Z'), now: new Date('2026-08-22T00:00:00Z'), contribution: 1000, frequency: 'weekly' });
+  assert.equal(result.daysRemaining, 120);
+  assert.equal(result.perDay, 379.17);
+  assert.equal(result.enough, false);
+  assert.ok(result.shortfall > 0);
+});
+
+test('calculates countdowns across a leap day and year boundary', () => {
+  const leap = calculateCountdown(new Date('2024-03-01T00:00:00Z'), new Date('2024-02-28T00:00:00Z'));
+  assert.equal(leap.days, 2);
+  const boundary = calculateCountdown(new Date('2027-01-01T00:00:00Z'), new Date('2026-12-31T23:00:00Z'));
+  assert.equal(boundary.hours, 1);
+});
+
+test('uses ISO-8601 week years and supports week 53', () => {
+  assert.deepEqual({ week: isoWeekInfo(new Date('2021-01-01T00:00:00Z')).week, year: isoWeekInfo(new Date('2021-01-01T00:00:00Z')).weekYear }, { week: 53, year: 2020 });
+  assert.deepEqual({ week: isoWeekInfo(new Date('2018-12-31T00:00:00Z')).week, year: isoWeekInfo(new Date('2018-12-31T00:00:00Z')).weekYear }, { week: 1, year: 2019 });
+  assert.equal(isoWeekInfo(new Date('2024-12-31T00:00:00Z')).dayOfYear, 366);
+  const week53 = isoWeekDates(2020, 53);
+  assert.equal(week53.valid, true);
+  assert.equal(week53.monday.toISOString().slice(0, 10), '2020-12-28');
+});
+
+test('calculates adult BMI in metric and imperial units', () => {
+  assert.equal(calculateBmi(68, 170, 'metric').bmi.toFixed(1), '23.5');
+  assert.equal(calculateBmi(150, 66, 'imperial').bmi.toFixed(1), '24.2');
+});
+
+test('totals trip entries by person and day without float artifacts', () => {
+  const result = calculateTripCost([{ amount: 1000, perPerson: true, category: 'Transport' }, { amount: 500, perDay: true, category: 'Food' }], 2, 3);
+  assert.deepEqual(result, { total: 3500, perTraveler: 1750, perDay: 1166.67, perTravelerPerDay: 583.33, totalsByCategory: { Transport: 2000, Food: 1500 } });
+});
+
+test('converts fuel efficiency units consistently', () => {
+  assert.equal(calculateFuelCost({ distance: 100, distanceUnit: 'km', efficiency: 10, efficiencyUnit: 'km/L', price: 60 }).total, 600);
+  assert.equal(calculateFuelCost({ distance: 100, distanceUnit: 'km', efficiency: 10, efficiencyUnit: 'L/100km', price: 60 }).total, 600);
+  assert.ok(Math.abs(calculateFuelCost({ distance: 62.1371, distanceUnit: 'miles', efficiency: 23.5215, efficiencyUnit: 'MPG', price: 60 }).liters - 10) < .001);
+});
+
+test('scores weighted and unweighted pros and cons', () => {
+  const items = [{ side: 'pro' as const, weight: 5 }, { side: 'pro' as const, weight: 3 }, { side: 'con' as const, weight: 4 }];
+  assert.deepEqual(calculateProsCons(items, true), { pros: 8, cons: 4, net: 4 });
+  assert.deepEqual(calculateProsCons(items, false), { pros: 2, cons: 1, net: 1 });
 });

@@ -4,12 +4,22 @@ export const storageKeys = {
   favorites: 'favorites',
   recent: 'recent',
   currency: 'currency',
+  preferences: 'preferences',
   ambag: 'ambag',
   allowance: 'allowance',
   tipid: 'tipid',
   decide: 'decide',
   pack: 'pack',
   receipt: 'receipt',
+  saveUp: 'save-up',
+  until: 'until',
+  focusRoom: 'focus-room',
+  glyphs: 'glyphs',
+  swatch: 'swatch',
+  tripCost: 'trip-cost',
+  fuelCost: 'fuel-cost',
+  prioritize: 'prioritize',
+  weighIt: 'weigh-it',
 } as const;
 
 export function readLocal<T>(key: string, fallback: T): T {

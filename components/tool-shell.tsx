@@ -1,26 +1,31 @@
 'use client';
 
-import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { ToolMeta } from '@/data/tools';
 import { rememberRecent } from '@/lib/storage';
-import { Brand } from '@/components/brand';
+import { SiteNav } from '@/components/site-nav';
+import { ToolIcon } from '@/components/tool-icon';
+import { ResultFeedback } from '@/components/result-feedback';
 
 export function ToolShell({ tool, children }: { tool: ToolMeta; children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   useEffect(() => rememberRecent(tool.slug), [tool.slug]);
+  // Tool inputs may intentionally use device time, locale, or locally saved data.
+  // Render their interactive surface only after hydration so the server and
+  // browser always agree on the initial tree.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), []);
   return (
-    <main>
-      <header className="site-header">
-        <Brand />
-        <Link href="/about" className="header-link">About & privacy</Link>
-      </header>
-      <div className="tool-page wrap">
-        <Link href="/" className="back-link">← All tools</Link>
+    <main className={`tool-world world-${tool.slug}`} data-tool={tool.slug}>
+      <ResultFeedback rootSelector={`[data-tool="${tool.slug}"]`} />
+      <SiteNav />
+      <div className={`tool-page tool-page-${tool.slug} wrap`}>
+        <a href="/" className="back-link">← All tools</a>
         <div className="tool-title">
-          <span className="tool-icon">{tool.icon}</span>
-          <div><h1>{tool.name}</h1><p>{tool.description}</p></div>
+          <span className="tool-icon"><ToolIcon slug={tool.slug} size={25} /></span>
+          <div><span className="tool-category">{tool.category}</span><h1>{tool.name}</h1><p>{tool.description}</p></div>
         </div>
-        {children}
+        {mounted ? children : <div className="tool-loading" role="status" aria-label={`Loading ${tool.name}`}><span /></div>}
       </div>
     </main>
   );
