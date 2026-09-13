@@ -19,6 +19,9 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  verification: {
+    google: 'ckDU5TR62hiS8b8RinEy6bLcojF3qVE0j890ep3xkaM',
+  },
   robots: {
     index: true,
     follow: true,
