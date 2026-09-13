@@ -13,6 +13,7 @@ import { GlyphsTool, SwatchTool } from '@/components/tools/creative-tools';
 import { BodyIndexTool } from '@/components/tools/health-tools';
 import { PrioritizeTool, WeighItTool } from '@/components/tools/organization-tools';
 import { FocusRoomTool } from '@/components/tools/focus-room';
+import { SITE_NAME } from '@/lib/site';
 
 const components: Record<string, React.ComponentType> = {
   percentage: PercentageTool, 'unit-price': UnitPriceTool, 'how-long': HowLongTool, 'time-ago': TimeAgoTool, 'age-calculator': AgeCalcTool,
@@ -27,7 +28,27 @@ const components: Record<string, React.ComponentType> = {
 export function generateStaticParams() { return tools.map((tool) => ({ slug: tool.slug })); }
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const tool = toolBySlug((await params).slug); if (!tool) return {};
-  return { title: `${tool.name} — UtiliCrate`, description: tool.description, openGraph: { title: `${tool.name} — UtiliCrate`, description: tool.description, images: [] }, twitter: { card: 'summary', title: `${tool.name} — UtiliCrate`, description: tool.description, images: [] } };
+  const title = `${tool.name}: ${tool.description.replace(/\.$/, '')}`;
+  const url = `/${tool.slug}`;
+  return {
+    title,
+    description: tool.description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'website',
+      url,
+      siteName: SITE_NAME,
+      title: `${title} | ${SITE_NAME}`,
+      description: tool.description,
+      images: [{ url: '/og.png', width: 1200, height: 630, alt: `${tool.name} on ${SITE_NAME}` }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} | ${SITE_NAME}`,
+      description: tool.description,
+      images: ['/og.png'],
+    },
+  };
 }
 
 export default async function ToolPage({ params }: { params: Promise<{ slug: string }> }) {
